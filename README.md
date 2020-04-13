@@ -1,6 +1,7 @@
 # AndroidApp-FlappyBirdClone
 FlappyBird game clone app (Android)
-Gdx library
+Gdx library.	
+
 Upgrade to the project in Udemy course: "The Complete Android N Developer Course"
 
 
