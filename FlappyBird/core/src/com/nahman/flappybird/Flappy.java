@@ -2,29 +2,28 @@ package com.nahman.flappybird;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 
 public class Flappy extends ApplicationAdapter {
     SpriteBatch batch;
 
-    //ShapeRenderer shapeRenderer;
-
-
-
     GameManager game;
+
 
     @Override
     public void create() {
         game = GameManager.getInstance();
         batch = new SpriteBatch();
 
-
-
     }
 
     @Override
     public void render() {
+
+        //game.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
         batch.begin();
         batch.draw(game.background, 0, 0, Gdx.graphics.getWidth(), game.screenHeight);
@@ -32,20 +31,31 @@ public class Flappy extends ApplicationAdapter {
         if (game.gameState == GameManager.GameState.GAME_OPENED){
             batch.draw(game.flappyBird,game.screenWidth/2 - game.flappyBird.getWidth()/2, game.screenHeight/2 + game.flappyBird.getHeight()/2);
             batch.draw(game.play,game.screenWidth/2 - game.play.getWidth()/2, (float) (game.screenHeight/2 - game.play.getHeight()*1.5));
-            batch.draw(game.birds[game.flapState], game.screenWidth / 2 - game.birds[game.flapState].getWidth() / 2, game.birdY);
+            batch.draw(game.birds[game.flapState], game.screenWidth/2 - game.birds[0].getWidth()/2, game.birdY);
 
             if (Gdx.input.justTouched()) {
-                game.checkIfPlayPressed();
+                if(game.checkIfPlayPressed()){
+                    game.clickSound.play();
+                    if (game.flagGameOpened == 0){
+                        game.themeSound.setLooping(true);
+                        game.themeSound.play();
+                        game.flagGameOpened = 1;
+                    }
+                }
             }
 
         }else {
 
             if (game.gameState == GameManager.GameState.GAME_STARTED) {
 
-                game.updateScore();
+                if(game.updateScore()){
+                    game.scoreSound.play();
+                }
 
                 if (Gdx.input.justTouched()) {
                     game.birdVelocity = -game.birds[0].getHeight() / 4;
+                    game.flySound.play();
+
                 }
 
                 for (int i = 0; i < game.numberOfTubes; i++) {
@@ -72,16 +82,18 @@ public class Flappy extends ApplicationAdapter {
                 }
 
             } else if (game.gameState == GameManager.GameState.GAME_NOT_STARTED) {
+
+                batch.draw(game.tapanywhere,game.screenWidth/2 - game.tapanywhere.getWidth() /2,game.screenHeight - game.screenHeight/10);
                 if (Gdx.input.justTouched()) {
                     game.gameState = GameManager.GameState.GAME_STARTED;
                 }
             }
 
 
-            batch.draw(game.birds[game.flapState], game.screenWidth / 2 - game.birds[game.flapState].getWidth() / 2, game.birdY);
+            batch.draw(game.birds[game.flapState], game.birdX, game.birdY);
 
             if (game.gameState == GameManager.GameState.GAME_FINISHED) {
-
+                game.themeSound.stop();
                 game.saveScore();
                 for (int i = 0; i < game.numberOfTubes; i++) {
                     batch.draw(game.topTube, game.tubesXArray[i], game.screenHeight / 2 + game.gap / 2 + game.tubeOfSet[i]);
@@ -108,24 +120,33 @@ public class Flappy extends ApplicationAdapter {
                 }
 
                 if (Gdx.input.justTouched()) {
-                    game.checkIfReplayPressed();
+                    if (game.checkIfReplayPressed()==true){
+                        game.clickSound.play();
+                    }
                 }
 
             }else {
                 game.font.draw(batch, String.valueOf(game.score), 100, 200);
-                game.checkBirdCollision();
+                if (game.checkBirdCollision()){
+                    game.crashSound.play();
+                }
                 game.animateBird();
             }
         }
 
         batch.end();
-       // shapeRenderer.end();
+       //game.shapeRenderer.end();
     }
 
 
 
     @Override
     public void dispose() {
+        game.flySound.dispose();
+        game.clickSound.dispose();
+        game.crashSound.dispose();
+        game.scoreSound.dispose();
+        game.themeSound.dispose();
         super.dispose();
         game.resetGameManager();
     }

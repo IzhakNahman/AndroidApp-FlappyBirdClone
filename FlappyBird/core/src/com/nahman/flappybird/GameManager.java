@@ -2,9 +2,12 @@ package com.nahman.flappybird;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
@@ -22,6 +25,7 @@ public class GameManager {
         GAME_FINISHED
     }
 
+    //ShapeRenderer shapeRenderer;
     Texture background;
     Texture[] birds;
     Texture topTube;
@@ -31,10 +35,17 @@ public class GameManager {
     Texture flappyBird;
     Texture medal;
     Texture play;
+    Texture tapanywhere;
     BitmapFont font;
     BitmapFont gameOverFont;
 
     Preferences prefs;
+
+    Sound flySound;
+    Sound crashSound;
+    Sound clickSound;
+    Sound scoreSound;
+    Music themeSound;
 
 
     int score;
@@ -53,6 +64,8 @@ public class GameManager {
     int numberOfTubes;
     float gap;
     int flagScoreUpdate;
+    int birdX;
+    int flagGameOpened;
 
     Circle birdCircle;
     Rectangle[] topTubesRectangles;
@@ -79,6 +92,7 @@ public class GameManager {
         timerBirdInt = 0;
         tubeVelocity = 4;
         numberOfTubes = 4;
+
         tubeOfSet = new float[numberOfTubes];
         tubesXArray = new float[numberOfTubes];
 
@@ -89,11 +103,12 @@ public class GameManager {
         gameOverFont = new BitmapFont();
         gameOverFont.setColor(Color.WHITE);
         gameOverFont.getData().scale(5);
-        // shapeRenderer = new ShapeRenderer();
+        //shapeRenderer = new ShapeRenderer();
         background = new Texture("bg.png");
         gameover = new Texture("gameover.png");
         replay = new Texture("ok.png");
         birds = new Texture[]{new Texture("bird.png"), new Texture("bird2.png")};
+        tapanywhere = new Texture("tapanywhere.png");
         topTube = new Texture("toptube.png");
         bottomTube = new Texture("bottomtube.png");
         play = new Texture("play.png");
@@ -105,13 +120,21 @@ public class GameManager {
         bottomTubesRectangles = new Rectangle[numberOfTubes];
         gap = Float.valueOf(birds[flapState].getHeight() * 4);
         randomGenerator = new Random();
-        distanceBetweenTubes = screenWidth * 5/6;
+        distanceBetweenTubes = screenWidth;
+
+        flySound = Gdx.audio.newSound(Gdx.files.internal("fly.mp3"));
+        clickSound = Gdx.audio.newSound(Gdx.files.internal("click.mp3"));
+        crashSound = Gdx.audio.newSound(Gdx.files.internal("crash.mp3"));
+        scoreSound = Gdx.audio.newSound(Gdx.files.internal("score.mp3"));
+        themeSound = Gdx.audio.newMusic(Gdx.files.internal("theme.wav"));
+
 
         setupGame();
 
     }
 
     private void setupGame() {
+        flagGameOpened = 0;
         flagScoreUpdate = 0;
         gravity = 2;
         birdVelocity = 0;
@@ -119,11 +142,12 @@ public class GameManager {
         timerBirdInt = 0;
         tubesCounter = 0;
         scoringTube = 0;
+        birdX = screenWidth / 3 - birds[flapState].getWidth() / 2;
         birdY = screenHeight / 2 - birds[0].getHeight() / 2;
 
         for (int i = 0; i < numberOfTubes; i++) {
             tubeOfSet[i] = (randomGenerator.nextFloat() - 0.5f) * (screenHeight - gap * 2);
-            tubesXArray[i] = screenWidth / 2 - topTube.getWidth() / 2 + screenWidth + i * distanceBetweenTubes;
+            tubesXArray[i] = screenWidth / 2 - topTube.getWidth() / 2 + screenWidth*1.5f + i * distanceBetweenTubes;
             topTubesRectangles[i] = new Rectangle();
             bottomTubesRectangles[i] = new Rectangle();
         }
@@ -137,8 +161,8 @@ public class GameManager {
         return game;
     }
     
-    public void updateScore(){
-        if (tubesXArray[scoringTube] < Gdx.graphics.getWidth() / 2){
+    public Boolean updateScore(){
+        if (tubesXArray[scoringTube] < birdX){
             score++;
             Gdx.app.log("Score",String.valueOf(score));
 
@@ -147,7 +171,9 @@ public class GameManager {
             }else{
                 scoringTube = 0;
             }
+            return true;
         }
+        return false;
     }
 
     public float getRandomTubeOffset(){
@@ -176,23 +202,24 @@ public class GameManager {
         }
     }
 
-    public void checkBirdCollision(){
-        // shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        // shapeRenderer.setColor(Color.RED);
-        birdCircle.set(Gdx.graphics.getWidth() / 2, birdY + birds[flapState].getHeight() / 2, birds[flapState].getHeight()/2);
-        //  shapeRenderer.circle(birdCircle.x, birdCircle.y, birdCircle.radius);
+    public Boolean checkBirdCollision(){
+           // shapeRenderer.setColor(Color.RED);
+        birdCircle.set(birdX + birds[flapState].getWidth()/2, birdY + birds[flapState].getHeight() / 2, birds[flapState].getHeight()/2);
+          //shapeRenderer.circle(birdCircle.x, birdCircle.y, birdCircle.radius);
         for (int i = 0; i < numberOfTubes; i++) {
-            // shapeRenderer.rect(bottomTubesRectangles[i].x, bottomTubesRectangles[i].y, bottomTubesRectangles[i].width, bottomTubesRectangles[i].height);
+             //shapeRenderer.rect(bottomTubesRectangles[i].x, bottomTubesRectangles[i].y, bottomTubesRectangles[i].width, bottomTubesRectangles[i].height);
             // shapeRenderer.rect(topTubesRectangles[i].x, topTubesRectangles[i].y, topTubesRectangles[i].width, topTubesRectangles[i].height);
 
             if (Intersector.overlaps(birdCircle,bottomTubesRectangles[i]) || Intersector.overlaps(birdCircle,topTubesRectangles[i])){
                 //Gdx.app.log("Collision","Yes!");
                 gameState = GameState.GAME_FINISHED;
+                return true;
             }
         }
+        return false;
     }
 
-    public void checkIfReplayPressed(){
+    public boolean checkIfReplayPressed(){
 
         Rectangle textureBounds = new Rectangle(screenWidth/2- replay.getWidth()/2,screenHeight/2 + screenHeight *1/8  ,game.replay.getWidth(),game.replay.getHeight());
 
@@ -200,17 +227,21 @@ public class GameManager {
         if(textureBounds.contains(tmp.x,tmp.y)) {
             gameState = GameState.GAME_OPENED;
             setupGame();
+            return true;
 
         }
+        return false;
     }
 
-    public void checkIfPlayPressed(){
+    public Boolean checkIfPlayPressed(){
 
         Rectangle textureBounds = new Rectangle((float)game.screenWidth/2 - game.play.getWidth()/2, (float) (game.screenHeight/2 + game.play.getHeight()*.5),game.play.getWidth(),game.play.getHeight());
         Vector3 tmp = new Vector3(Gdx.input.getX(),Gdx.input.getY(),0);
         if(textureBounds.contains(tmp.x,tmp.y)) {
             gameState = GameState.GAME_NOT_STARTED;
+            return true;
         }
+        return false;
     }
 
     public void saveScore(){
