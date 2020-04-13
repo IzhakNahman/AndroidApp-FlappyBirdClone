@@ -90,7 +90,6 @@ public class GameManager {
         gameState = GameState.GAME_OPENED;
         getNumberOfTubesForVelocityUp = 8;
         timerBirdInt = 0;
-        tubeVelocity = 4;
         numberOfTubes = 4;
 
         tubeOfSet = new float[numberOfTubes];
@@ -134,6 +133,7 @@ public class GameManager {
     }
 
     private void setupGame() {
+        tubeVelocity = 4;
         flagGameOpened = 0;
         flagScoreUpdate = 0;
         gravity = 2;
