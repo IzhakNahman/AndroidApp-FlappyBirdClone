@@ -4,6 +4,8 @@ Gdx library.
 
 Upgrade to the project in Udemy course: "The Complete Android N Developer Course"
 
+https://youtu.be/kDL7nZjFcik
+
 
 
 ![1](https://user-images.githubusercontent.com/55804602/79123637-493b8480-7da3-11ea-9c67-45d06be7464a.png)
